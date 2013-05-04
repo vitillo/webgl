@@ -5,7 +5,6 @@
     
     <script src="../framework/framework.js"></script>
     <script type="text/javascript">
-      var canvas = null;
       var gl = null;
       var vertexBufferObject = null;
       var theProgram = null;
@@ -16,34 +15,18 @@
        }
       
       function init(){
-        initializeWebGL();
+        gl = Framework.initializeWebGL("glcanvas");
         initializeProgram();
         initializeVertexBuffer();
-      }
-
-      function initializeWebGL() {
-        canvas = document.getElementById("glcanvas");
-        canvas.width = 500;
-        canvas.height = 500;
-        
-        try {
-          gl = canvas.getContext("experimental-webgl");
-        }
-        catch(e) {
-        }
-        
-        if (!gl) {
-          alert("Unable to initialize WebGL. Your browser may not support it.");
-        }
       }
 
       function initializeProgram(){
         var shaderList = [];
 
-        shaderList.push(loadShader(gl, "shader-fs"));
-        shaderList.push(loadShader(gl, "shader-vs"));
+        shaderList.push(Framework.loadShader(gl, "shader-fs"));
+        shaderList.push(Framework.loadShader(gl, "shader-vs"));
 
-        theProgram = createProgram(shaderList);
+        theProgram = Framework.createProgram(shaderList);
       }
 
       function initializeVertexBuffer(){
@@ -54,7 +37,6 @@
           1.0, 0.0, 0.0, 1.0,
           0.0, 1.0, 0.0, 1.0,
           0.0, 0.0, 1.0, 1,0];
-
 
         vertexBufferObject = gl.createBuffer();
 
@@ -67,7 +49,7 @@
         var vertexPositionAttribute = null;
         var vertexColorAttribute = null;
 
-        gl.clearColor(0.0, 0.0, 0.0, 0.0);
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         gl.useProgram(theProgram);
@@ -89,14 +71,6 @@
 
     </script>
   </head>
-
-  <style type="text/css">
-    canvas {
-      width: 500px;
-      height: 500px;
-      background-color: black;
-    }
-  </style>
 
   <script id="shader-fs" type="x-shader/x-fragment">
     precision mediump float;
@@ -120,7 +94,7 @@
   </script>
 	
   <body onload="start()">
-    <canvas id="glcanvas">
+    <canvas id="glcanvas" width=500px height=500px>
       Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
     </canvas>
   </body>

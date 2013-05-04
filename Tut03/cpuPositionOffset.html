@@ -1,13 +1,14 @@
 <html>
   <head>
-    <title>Tut 02 Playing with Colors</title>
+    <title>Tut 03 OpenGL's Moving Triangle</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     
     <script src="../framework/framework.js"></script>
     <script type="text/javascript">
-      var gl = null;
-      var positionBufferObject = null;
-      var theProgram = null;
+      var gl;
+      var positionBufferObject;
+      var theProgram;
+      var vertexPositions;
      
       function start() {
         init();
@@ -30,20 +31,23 @@
       }
 
       function initializeVertexBuffer(){
-        var vertexPositions = [
-          0.75, 0.75, 0.0, 1.0,
-          0.75, -0.75, 0.0, 1.0,
-          -0.75, -0.75, 0.0, 1.0];
+        vertexPositions = [
+          0.25, 0.25, 0.0, 1.0,
+          0.25, -0.25, 0.0, 1.0,
+          -0.25, -0.25, 0.0, 1.0];
 
         positionBufferObject = gl.createBuffer();
 
         gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferObject);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositions), gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositions), gl.STREAM_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
       }
 
-      function display(){
+      function display(timestamp){
         var vertexPositionAttribute = null;
+        var offsets = computePositionOffsets();
+
+        adjustVertexData(offsets);
 
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
@@ -59,8 +63,32 @@
 
         gl.disableVertexAttribArray(vertexPositionAttribute);
         gl.useProgram(null);
+
+        requestAnimFrame(display);
       }
 
+      function computePositionOffsets(){
+        var loopDuration = 5.0;
+        var scale = 2*Math.PI/loopDuration;
+
+        var elapsedTime = new Date().getTime() / 1000;
+        var currTimeThroughLoop = elapsedTime % loopDuration;
+
+        return [Math.cos(currTimeThroughLoop*scale)*0.5, Math.sin(currTimeThroughLoop*scale)*0.5];
+      }
+
+      function adjustVertexData(offsets){
+        var newData = vertexPositions.slice(0);
+
+        for(var i = 0; i < newData.length; i += 4){
+          newData[i] += offsets[0];
+          newData[i+1] += offsets[1];
+        }
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferObject);
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(newData));
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+      } 
     </script>
   </head>
 
