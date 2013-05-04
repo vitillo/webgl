@@ -1,13 +1,13 @@
 <html>
   <head>
-    <title>Tut 01 Hello Triangle</title>
+    <title>Tut 02 Playing with Colors</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     
+    <script src="../framework/framework.js"></script>
     <script type="text/javascript">
       var canvas = null;
       var gl = null;
       var positionBufferObject = null;
-      var vertexPositionAttribute = null;
       var theProgram = null;
      
       function start() {
@@ -23,8 +23,8 @@
 
       function initializeWebGL() {
         canvas = document.getElementById("glcanvas");
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvas.width = 500;
+        canvas.height = 500;
         
         try {
           gl = canvas.getContext("experimental-webgl");
@@ -38,20 +38,12 @@
       }
 
       function initializeProgram(){
-        var fragmentShader = createShader(gl, "shader-fs");
-        var vertexShader = createShader(gl, "shader-vs");
+        var shaderList = [];
 
-        theProgram = gl.createProgram();
-        gl.attachShader(theProgram, vertexShader);
-        gl.attachShader(theProgram, fragmentShader);
-        gl.linkProgram(theProgram);
+        shaderList.push(loadShader(gl, "shader-fs"));
+        shaderList.push(loadShader(gl, "shader-vs"));
 
-        if(!gl.getProgramParameter(theProgram, gl.LINK_STATUS)){
-          alert("Shader linker failure: " + gl.getProgramInfoLog(theProgram));
-        }
-
-        gl.detachShader(theProgram, vertexShader);
-        gl.detachShader(theProgram, fragmentShader);
+        theProgram = createProgram(shaderList);
       }
 
       function initializeVertexBuffer(){
@@ -68,6 +60,8 @@
       }
 
       function display(){
+        var vertexPositionAttribute = null;
+
         gl.clearColor(0.0, 0.0, 0.0, 0.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -84,69 +78,22 @@
         gl.useProgram(null);
       }
 
-      function createShader(gl, id){
-        var shaderScript;
-        var theSource;
-        var currentChild;
-        var shader;
-
-        shaderScript = document.getElementById(id);
-
-        if(!shaderScript){
-          return null;
-        }
-
-        theSource = "";
-        currentChild = shaderScript.firstChild;
-
-        while(currentChild){
-          if(currentChild.nodeType == currentChild.TEXT_NODE){
-            theSource += currentChild.textContent;
-          }
-
-          currentChild = currentChild.nextSibling;
-        }
-
-        if(shaderScript.type == "x-shader/x-fragment"){
-          shader = gl.createShader(gl.FRAGMENT_SHADER);
-        }else if(shaderScript.type == "x-shader/x-vertex"){
-          shader = gl.createShader(gl.VERTEX_SHADER);
-        }else{
-          return null;
-        }
-
-        gl.shaderSource(shader, theSource);
-        gl.compileShader(shader);
-
-        if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)){
-          alert("Compile failure in " + id + " shader: " + gl.getShaderInfoLog(shader));
-          return null;
-        }
-
-        return shader;
-      }
-
-      window.onresize = function(ev){
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        gl.viewport(0, 0, canvas.width, canvas.height);
-        display();
-      }
     </script>
   </head>
 
   <style type="text/css">
     canvas {
-      width: 100%;
-      height: 100%;
+      width: 500px;
+      height: 500px;
       background-color: black;
     }
   </style>
 
-
   <script id="shader-fs" type="x-shader/x-fragment">
     void main(void) {
-     gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+      precision mediump float;
+      float lerpValue = gl_FragCoord.y / 500.0;
+      gl_FragColor = mix(vec4(1.0, 1.0, 1.0, 1.0), vec4(0.2, 0.2, 0.2, 1.0), lerpValue);
     }
   </script>
 

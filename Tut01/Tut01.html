@@ -1,0 +1,167 @@
+<html>
+  <head>
+    <title>Tut 01 Hello Triangle</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    
+    <script type="text/javascript">
+      var canvas = null;
+      var gl = null;
+      var positionBufferObject = null;
+      var theProgram = null;
+     
+      function start() {
+        init();
+        display();
+       }
+      
+      function init(){
+        initializeWebGL();
+        initializeProgram();
+        initializeVertexBuffer();
+      }
+
+      function initializeWebGL() {
+        canvas = document.getElementById("glcanvas");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        try {
+          gl = canvas.getContext("experimental-webgl");
+        }
+        catch(e) {
+        }
+        
+        if (!gl) {
+          alert("Unable to initialize WebGL. Your browser may not support it.");
+        }
+      }
+
+      function initializeProgram(){
+        var fragmentShader = createShader(gl, "shader-fs");
+        var vertexShader = createShader(gl, "shader-vs");
+
+        theProgram = gl.createProgram();
+        gl.attachShader(theProgram, vertexShader);
+        gl.attachShader(theProgram, fragmentShader);
+        gl.linkProgram(theProgram);
+
+        if(!gl.getProgramParameter(theProgram, gl.LINK_STATUS)){
+          alert("Shader linker failure: " + gl.getProgramInfoLog(theProgram));
+        }
+
+        gl.detachShader(theProgram, vertexShader);
+        gl.detachShader(theProgram, fragmentShader);
+      }
+
+      function initializeVertexBuffer(){
+        var vertexPositions = [
+          0.75, 0.75, 0.0, 1.0,
+          0.75, -0.75, 0.0, 1.0,
+          -0.75, -0.75, 0.0, 1.0];
+
+        positionBufferObject = gl.createBuffer();
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferObject);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositions), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+      }
+
+      function display(){
+        var vertexPositionAttribute = null;
+
+        gl.clearColor(0.0, 0.0, 0.0, 0.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(theProgram);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferObject);
+        vertexPositionAttribute = gl.getAttribLocation(theProgram, "aVertexPosition");
+        gl.enableVertexAttribArray(vertexPositionAttribute);
+        gl.vertexAttribPointer(vertexPositionAttribute, 4, gl.FLOAT, false, 0, 0);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+        gl.disableVertexAttribArray(vertexPositionAttribute);
+        gl.useProgram(null);
+      }
+
+      function createShader(gl, id){
+        var shaderScript;
+        var theSource;
+        var currentChild;
+        var shader;
+
+        shaderScript = document.getElementById(id);
+
+        if(!shaderScript){
+          return null;
+        }
+
+        theSource = "";
+        currentChild = shaderScript.firstChild;
+
+        while(currentChild){
+          if(currentChild.nodeType == currentChild.TEXT_NODE){
+            theSource += currentChild.textContent;
+          }
+
+          currentChild = currentChild.nextSibling;
+        }
+
+        if(shaderScript.type == "x-shader/x-fragment"){
+          shader = gl.createShader(gl.FRAGMENT_SHADER);
+        }else if(shaderScript.type == "x-shader/x-vertex"){
+          shader = gl.createShader(gl.VERTEX_SHADER);
+        }else{
+          return null;
+        }
+
+        gl.shaderSource(shader, theSource);
+        gl.compileShader(shader);
+
+        if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)){
+          alert("Compile failure in " + id + " shader: " + gl.getShaderInfoLog(shader));
+          return null;
+        }
+
+        return shader;
+      }
+
+      window.onresize = function(ev){
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        display();
+      }
+    </script>
+  </head>
+
+  <style type="text/css">
+    canvas {
+      width: 100%;
+      height: 100%;
+      background-color: black;
+    }
+  </style>
+
+
+  <script id="shader-fs" type="x-shader/x-fragment">
+    void main(void) {
+      gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    }
+  </script>
+
+  <script id="shader-vs" type="x-shader/x-vertex">
+    attribute vec4 aVertexPosition;
+
+    void main(void) {
+      gl_Position = aVertexPosition;
+    }
+  </script>
+	
+  <body onload="start()">
+    <canvas id="glcanvas">
+      Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
+    </canvas>
+  </body>
+</html>
