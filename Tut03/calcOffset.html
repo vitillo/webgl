@@ -1,13 +1,16 @@
 <html>
   <head>
-    <title>Tut 02 Playing with Colors</title>
+    <title>Tut 03 OpenGL's Moving Triangle</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     
     <script src="../framework/framework.js"></script>
     <script type="text/javascript">
-      var gl = null;
-      var vertexBufferObject = null;
-      var theProgram = null;
+      var gl;
+      var positionBufferObject;
+      var theProgram;
+      var vertexPositions;
+      var elapsedTimeUniform;
+      var initialTime = new Date().getTime();
      
       function start() {
         init();
@@ -22,74 +25,82 @@
 
       function initializeProgram(){
         var shaderList = [];
+        var loopDurationUniform;
 
         shaderList.push(Framework.loadShader(gl, "shader-fs"));
         shaderList.push(Framework.loadShader(gl, "shader-vs"));
 
         theProgram = Framework.createProgram(shaderList);
+
+        elapsedTimeUniform = gl.getUniformLocation(theProgram, "time");
+
+        loopDurationUniform = gl.getUniformLocation(theProgram, "loopDuration");
+        gl.useProgram(theProgram);
+        gl.uniform1f(loopDurationUniform, 5.0);
+        gl.useProgram(null);
       }
 
       function initializeVertexBuffer(){
-        var vertexData = [
-          0.0, 0.5, 0.0, 1.0,
-          0.5, -0.366, 0.0, 1.0,
-          -0.5, -0.366, 0.0, 1.0,
-          1.0, 0.0, 0.0, 1.0,
-          0.0, 1.0, 0.0, 1.0,
-          0.0, 0.0, 1.0, 1,0];
+        vertexPositions = [
+          0.25, 0.25, 0.0, 1.0,
+          0.25, -0.25, 0.0, 1.0,
+          -0.25, -0.25, 0.0, 1.0];
 
-        vertexBufferObject = gl.createBuffer();
+        positionBufferObject = gl.createBuffer();
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBufferObject);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexData), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferObject);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositions), gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
       }
 
-      function display(){
+      function display(delta){
         var vertexPositionAttribute = null;
-        var vertexColorAttribute = null;
 
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         gl.useProgram(theProgram);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBufferObject);
+        gl.uniform1f(elapsedTimeUniform, (new Date().getTime() - initialTime)/1000);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferObject);
         vertexPositionAttribute = gl.getAttribLocation(theProgram, "position");
-        vertexColorAttribute = gl.getAttribLocation(theProgram, "aVertexColor");
         gl.enableVertexAttribArray(vertexPositionAttribute);
-        gl.enableVertexAttribArray(vertexColorAttribute);
         gl.vertexAttribPointer(vertexPositionAttribute, 4, gl.FLOAT, false, 0, 0);
-        gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, 48);
 
         gl.drawArrays(gl.TRIANGLES, 0, 3);
 
         gl.disableVertexAttribArray(vertexPositionAttribute);
-        gl.disableVertexAttribArray(vertexColorAttribute);
         gl.useProgram(null);
-      }
 
+        requestAnimFrame(display);
+      }
     </script>
   </head>
 
   <script id="shader-fs" type="x-shader/x-fragment">
-    precision mediump float;
-    varying vec4 theColor;
+    precision highp float;
 
     void main(void) {
-      gl_FragColor = theColor;
+      float lerpValue = gl_FragCoord.y / 500.0;
+      gl_FragColor = mix(vec4(1.0, 1.0, 1.0, 1.0), vec4(0.2, 0.2, 0.2, 1.0), lerpValue);
     }
   </script>
 
   <script id="shader-vs" type="x-shader/x-vertex">
     attribute vec4 position;
-    attribute vec4 aVertexColor;
-
-    varying vec4 theColor;
+    uniform float loopDuration;
+    uniform float time;
 
     void main(void) {
-      gl_Position = position;
-      theColor = aVertexColor;
+      float timeScale = 2.0*3.14159/loopDuration;
+      float currTime = mod(time, loopDuration);
+      vec4 totalOffset = vec4(cos(currTime*timeScale)*0.5,
+                              sin(currTime*timeScale)*0.5,
+                              0.0,
+                              0.0);
+
+      gl_Position = position + totalOffset;
     }
   </script>
 	

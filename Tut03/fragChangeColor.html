@@ -9,7 +9,8 @@
       var positionBufferObject;
       var theProgram;
       var vertexPositions;
-      var offsetLocation;
+      var elapsedTimeUniform;
+      var initialTime = new Date().getTime();
      
       function start() {
         init();
@@ -24,12 +25,22 @@
 
       function initializeProgram(){
         var shaderList = [];
+        var loopDurationUniform;
 
         shaderList.push(Framework.loadShader(gl, "shader-fs"));
         shaderList.push(Framework.loadShader(gl, "shader-vs"));
 
         theProgram = Framework.createProgram(shaderList);
-        offsetLocation = gl.getUniformLocation(theProgram, "offset");
+
+        elapsedTimeUniform = gl.getUniformLocation(theProgram, "time");
+
+        loopDurationUniform = gl.getUniformLocation(theProgram, "loopDuration");
+        fragLoopDurationUniform = gl.getUniformLocation(theProgram, "fragLoopDuration");
+
+        gl.useProgram(theProgram);
+        gl.uniform1f(loopDurationUniform, 5.0);
+        gl.uniform1f(fragLoopDurationUniform, 5.0);
+        gl.useProgram(null);
       }
 
       function initializeVertexBuffer(){
@@ -41,20 +52,19 @@
         positionBufferObject = gl.createBuffer();
 
         gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferObject);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositions), gl.STREAM_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositions), gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
       }
 
-      function display(timestamp){
+      function display(delta){
         var vertexPositionAttribute = null;
-        var offsets = computePositionOffsets();
 
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         gl.useProgram(theProgram);
 
-        gl.uniform2f(offsetLocation, offsets[0], offsets[1]);
+        gl.uniform1f(elapsedTimeUniform, (new Date().getTime() - initialTime)/1000);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferObject);
         vertexPositionAttribute = gl.getAttribLocation(theProgram, "position");
@@ -68,34 +78,37 @@
 
         requestAnimFrame(display);
       }
-
-      function computePositionOffsets(){
-        var loopDuration = 5.0;
-        var scale = 2*Math.PI/loopDuration;
-
-        var elapsedTime = new Date().getTime() / 1000;
-        var currTimeThroughLoop = elapsedTime % loopDuration;
-
-        return [Math.cos(currTimeThroughLoop*scale)*0.5, Math.sin(currTimeThroughLoop*scale)*0.5];
-      }
     </script>
   </head>
 
   <script id="shader-fs" type="x-shader/x-fragment">
-    precision mediump float;
+    precision highp float;
+    uniform float fragLoopDuration;
+    uniform float time;
+
+    const vec4 firstColor = vec4(1.0, 1.0, 1.0, 1.0);
+    const vec4 secondColor = vec4(0.0, 1.0, 0.0, 1.0);
 
     void main(void) {
-      float lerpValue = gl_FragCoord.y / 500.0;
-      gl_FragColor = mix(vec4(1.0, 1.0, 1.0, 1.0), vec4(0.2, 0.2, 0.2, 1.0), lerpValue);
+      float currTime = mod(time, fragLoopDuration);
+      float currLerp = currTime / fragLoopDuration;
+      gl_FragColor = mix(firstColor, secondColor, currLerp);
     }
   </script>
 
   <script id="shader-vs" type="x-shader/x-vertex">
     attribute vec4 position;
-    uniform vec2 offset;
+    uniform float loopDuration;
+    uniform float time;
 
     void main(void) {
-      vec4 totalOffset = vec4(offset.x, offset.y, 0.0, 0.0);
+      float timeScale = 2.0*3.14159/loopDuration;
+      float currTime = mod(time, loopDuration);
+      vec4 totalOffset = vec4(cos(currTime*timeScale)*0.5,
+                              sin(currTime*timeScale)*0.5,
+                              0.0,
+                              0.0);
+
       gl_Position = position + totalOffset;
     }
   </script>

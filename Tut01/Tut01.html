@@ -59,7 +59,7 @@
         gl.useProgram(theProgram);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferObject);
-        vertexPositionAttribute = gl.getAttribLocation(theProgram, "aVertexPosition");
+        vertexPositionAttribute = gl.getAttribLocation(theProgram, "position");
         gl.enableVertexAttribArray(vertexPositionAttribute);
         gl.vertexAttribPointer(vertexPositionAttribute, 4, gl.FLOAT, false, 0, 0);
 
@@ -127,10 +127,10 @@
   </script>
 
   <script id="shader-vs" type="x-shader/x-vertex">
-    attribute vec4 aVertexPosition;
+    attribute vec4 position;
 
     void main(void) {
-      gl_Position = aVertexPosition;
+      gl_Position = position;
     }
   </script>
 	

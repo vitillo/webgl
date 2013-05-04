@@ -51,7 +51,7 @@
         gl.useProgram(theProgram);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, positionBufferObject);
-        vertexPositionAttribute = gl.getAttribLocation(theProgram, "aVertexPosition");
+        vertexPositionAttribute = gl.getAttribLocation(theProgram, "position");
         gl.enableVertexAttribArray(vertexPositionAttribute);
         gl.vertexAttribPointer(vertexPositionAttribute, 4, gl.FLOAT, false, 0, 0);
 
@@ -65,18 +65,19 @@
   </head>
 
   <script id="shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+
     void main(void) {
-      precision mediump float;
       float lerpValue = gl_FragCoord.y / 500.0;
       gl_FragColor = mix(vec4(1.0, 1.0, 1.0, 1.0), vec4(0.2, 0.2, 0.2, 1.0), lerpValue);
     }
   </script>
 
   <script id="shader-vs" type="x-shader/x-vertex">
-    attribute vec4 aVertexPosition;
+    attribute vec4 position;
 
     void main(void) {
-      gl_Position = aVertexPosition;
+      gl_Position = position;
     }
   </script>
 	
