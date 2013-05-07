@@ -1,0 +1,233 @@
+<html>
+  <head>
+    <title>Tut 04 Objects at Rest</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    
+    <script src="../framework/framework.js"></script>
+    <script type="text/javascript">
+      var gl = null;
+      var vertexBufferObject = null;
+      var theProgram = null;
+      var offsetUniform;
+      var vertexData;
+     
+      function start() {
+        init();
+        display();
+       }
+      
+      function init(){
+        gl = Framework.initializeWebGL("glcanvas");
+        initializeProgram();
+        initializeVertexBuffer();
+
+        gl.enable(gl.CULL_FACE);
+        gl.cullFace(gl.BACK);
+        gl.frontFace(gl.CW);
+      }
+
+      function initializeProgram(){
+        var shaderList = [];
+        var frustumScaleUnif;
+        var zNearUnif;
+        var zFarunif;
+
+        shaderList.push(Framework.loadShader(gl, "shader-fs"));
+        shaderList.push(Framework.loadShader(gl, "shader-vs"));
+
+        theProgram = Framework.createProgram(shaderList);
+
+        offsetUniform = gl.getUniformLocation(theProgram, "offset");
+
+        frustumScaleUnif = gl.getUniformLocation(theProgram, "frustumScale");
+        zNearUnif = gl.getUniformLocation(theProgram, "zNear");
+        zFarUnif = gl.getUniformLocation(theProgram, "zFar");
+
+        gl.useProgram(theProgram);
+        gl.uniform1f(frustumScaleUnif, 1.0);
+        gl.uniform1f(zNearUnif, 1.0);
+        gl.uniform1f(zFarUnif, 3.0);
+        gl.useProgram(null);
+      }
+
+      function initializeVertexBuffer(){
+        vertexData = [
+           0.25,  0.25, -1.25, 1.0,
+           0.25, -0.25, -1.25, 1.0,
+          -0.25,  0.25, -1.25, 1.0,
+
+           0.25, -0.25, -1.25, 1.0,
+          -0.25, -0.25, -1.25, 1.0,
+          -0.25,  0.25, -1.25, 1.0,
+
+           0.25,  0.25, -2.75, 1.0,
+          -0.25,  0.25, -2.75, 1.0,
+           0.25, -0.25, -2.75, 1.0,
+
+           0.25, -0.25, -2.75, 1.0,
+          -0.25,  0.25, -2.75, 1.0,
+          -0.25, -0.25, -2.75, 1.0,
+
+          -0.25,  0.25, -1.25, 1.0,
+          -0.25, -0.25, -1.25, 1.0,
+          -0.25, -0.25, -2.75, 1.0,
+
+          -0.25,  0.25, -1.25, 1.0,
+          -0.25, -0.25, -2.75, 1.0,
+          -0.25,  0.25, -2.75, 1.0,
+
+           0.25,  0.25, -1.25, 1.0,
+           0.25, -0.25, -2.75, 1.0,
+           0.25, -0.25, -1.25, 1.0,
+
+           0.25,  0.25, -1.25, 1.0,
+           0.25,  0.25, -2.75, 1.0,
+           0.25, -0.25, -2.75, 1.0,
+
+           0.25,  0.25, -2.75, 1.0,
+           0.25,  0.25, -1.25, 1.0,
+          -0.25,  0.25, -1.25, 1.0,
+
+           0.25,  0.25, -2.75, 1.0,
+          -0.25,  0.25, -1.25, 1.0,
+          -0.25,  0.25, -2.75, 1.0,
+
+           0.25, -0.25, -2.75, 1.0,
+          -0.25, -0.25, -1.25, 1.0,
+           0.25, -0.25, -1.25, 1.0,
+
+           0.25, -0.25, -2.75, 1.0,
+          -0.25, -0.25, -2.75, 1.0,
+          -0.25, -0.25, -1.25, 1.0,
+
+
+           0.0, 0.0, 1.0, 1.0,
+           0.0, 0.0, 1.0, 1.0,
+           0.0, 0.0, 1.0, 1.0,
+
+           0.0, 0.0, 1.0, 1.0,
+           0.0, 0.0, 1.0, 1.0,
+           0.0, 0.0, 1.0, 1.0,
+
+           0.8, 0.8, 0.8, 1.0,
+           0.8, 0.8, 0.8, 1.0,
+           0.8, 0.8, 0.8, 1.0,
+
+           0.8, 0.8, 0.8, 1.0,
+           0.8, 0.8, 0.8, 1.0,
+           0.8, 0.8, 0.8, 1.0,
+
+           0.0, 1.0, 0.0, 1.0,
+           0.0, 1.0, 0.0, 1.0,
+           0.0, 1.0, 0.0, 1.0,
+
+           0.0, 1.0, 0.0, 1.0,
+           0.0, 1.0, 0.0, 1.0,
+           0.0, 1.0, 0.0, 1.0,
+
+           0.5, 0.5, 0.0, 1.0,
+           0.5, 0.5, 0.0, 1.0,
+           0.5, 0.5, 0.0, 1.0,
+
+           0.5, 0.5, 0.0, 1.0,
+           0.5, 0.5, 0.0, 1.0,
+           0.5, 0.5, 0.0, 1.0,
+
+           1.0, 0.0, 0.0, 1.0,
+           1.0, 0.0, 0.0, 1.0,
+           1.0, 0.0, 0.0, 1.0,
+
+           1.0, 0.0, 0.0, 1.0,
+           1.0, 0.0, 0.0, 1.0,
+           1.0, 0.0, 0.0, 1.0,
+
+           0.0, 1.0, 1.0, 1.0,
+           0.0, 1.0, 1.0, 1.0,
+           0.0, 1.0, 1.0, 1.0,
+
+           0.0, 1.0, 1.0, 1.0,
+           0.0, 1.0, 1.0, 1.0,
+           0.0, 1.0, 1.0, 1.0,
+        ]
+
+        vertexBufferObject = gl.createBuffer();
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBufferObject);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexData), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+      }
+
+      function display(){
+        var vertexPositionAttribute = null;
+        var vertexColorAttribute = null;
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(theProgram);
+
+        gl.uniform2f(offsetUniform, 0.5, 0.5);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBufferObject);
+        vertexPositionAttribute = gl.getAttribLocation(theProgram, "position");
+        vertexColorAttribute = gl.getAttribLocation(theProgram, "color");
+        gl.enableVertexAttribArray(vertexPositionAttribute);
+        gl.enableVertexAttribArray(vertexColorAttribute);
+        gl.vertexAttribPointer(vertexPositionAttribute, 4, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, 4*vertexData.length/2);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 36);
+
+        gl.disableVertexAttribArray(vertexPositionAttribute);
+        gl.disableVertexAttribArray(vertexColorAttribute);
+        gl.useProgram(null);
+      }
+
+    </script>
+  </head>
+
+  <script id="shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+
+    varying vec4 theColor;
+
+    void main(void) {
+      gl_FragColor = theColor;
+    }
+  </script>
+
+  <script id="shader-vs" type="x-shader/x-vertex">
+    attribute vec4 position;
+    attribute vec4 color;
+
+    varying vec4 theColor;
+    uniform vec2 offset;
+    uniform float zNear;
+    uniform float zFar;
+    uniform float frustumScale;
+
+    void main(void) {
+      vec4 cameraPos = position + vec4(offset.x, offset.y, 0.0, 0.0);
+      vec4 clipPos;
+
+      clipPos.xy = cameraPos.xy * frustumScale;
+
+      clipPos.z = cameraPos.z*(zNear + zFar)/(zNear - zFar);
+      clipPos.z += 2.0*zNear*zFar/(zNear - zFar);
+
+      clipPos.w = -cameraPos.z;
+
+      gl_Position = clipPos;
+      theColor = color;
+
+      //gl_Position = position + vec4(offset.x, offset.y, 0.0, 0.0);
+      //theColor = color;
+    }
+  </script>
+	
+  <body onload="start()">
+    <canvas id="glcanvas" width=500px height=500px>
+      Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
+    </canvas>
+  </body>
+</html>
