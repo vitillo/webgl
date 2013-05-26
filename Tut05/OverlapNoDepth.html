@@ -1,0 +1,288 @@
+<html>
+  <head>
+    <title>Tut 05 Overlap and Depth Buffering</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    
+    <script src="../framework/framework.js"></script>
+    <script type="text/javascript">
+      var gl = null;
+      var vertexBufferObject = null;
+      var indexBufferObject = null;
+      var theProgram = null;
+      var offsetUniform;
+      var vertexData;
+      var indexData;
+      var vaoObject1;
+      var vaoObject2;
+
+      var numberOfVertices = 36;
+      var RIGHT_EXTENT = 0.8;
+      var LEFT_EXTENT  = -RIGHT_EXTENT;
+      var TOP_EXTENT = 0.20;
+      var MIDDLE_EXTENT = 0.0;
+      var BOTTOM_EXTENT = -TOP_EXTENT;
+      var FRONT_EXTENT = -1.25;
+      var REAR_EXTENT = -1.75;
+
+      function start() {
+        init();
+        display();
+       }
+      
+      function init(){
+        gl = Framework.initializeWebGL("glcanvas");
+        initializeProgram();
+        initializeVertexBuffer();
+        initializeVertexArrayObjects();
+
+        gl.enable(gl.CULL_FACE);
+        gl.cullFace(gl.BACK);
+        gl.frontFace(gl.CW);
+      }
+
+      function initializeProgram(){
+        var shaderList = [];
+        var perspectiveMatrixUnif;
+        var frustumScale;
+        var zNear;
+        var zFar;
+
+        shaderList.push(Framework.loadShader(gl, "shader-fs"));
+        shaderList.push(Framework.loadShader(gl, "shader-vs"));
+
+        theProgram = Framework.createProgram(shaderList);
+
+        offsetUniform = gl.getUniformLocation(theProgram, "offset");
+
+        perspectiveMatrixUnif = gl.getUniformLocation(theProgram, "perspectiveMatrix");
+
+        frustumScale = 1.0;
+        zNear = 1.0;
+        zFar = 3.0;
+
+        perspectiveMatrix = [frustumScale, 0.0, 0.0, 0.0,
+                             0.0, frustumScale, 0.0, 0.0,
+                             0.0, 0.0, (zFar + zNear)/(zNear - zFar), -1.0,
+                             0.0, 0.0, (2.0*zFar*zNear)/(zNear - zFar), 0.0];
+
+        gl.useProgram(theProgram);
+        gl.uniformMatrix4fv(perspectiveMatrixUnif, false, perspectiveMatrix);
+        gl.useProgram(null);
+      }
+
+      function initializeVertexBuffer(){
+        vertexData = [
+           //Object 1 positions
+           LEFT_EXTENT,	  TOP_EXTENT,    REAR_EXTENT,
+           LEFT_EXTENT,	  MIDDLE_EXTENT, FRONT_EXTENT,
+           RIGHT_EXTENT,  MIDDLE_EXTENT, FRONT_EXTENT,
+           RIGHT_EXTENT,  TOP_EXTENT,    REAR_EXTENT,
+
+           LEFT_EXTENT,	  BOTTOM_EXTENT, REAR_EXTENT,
+           LEFT_EXTENT,	  MIDDLE_EXTENT, FRONT_EXTENT,
+           RIGHT_EXTENT,  MIDDLE_EXTENT, FRONT_EXTENT,
+           RIGHT_EXTENT,  BOTTOM_EXTENT, REAR_EXTENT,
+
+           LEFT_EXTENT,	  TOP_EXTENT,	   REAR_EXTENT,
+           LEFT_EXTENT,	  MIDDLE_EXTENT, FRONT_EXTENT,
+           LEFT_EXTENT,	  BOTTOM_EXTENT, REAR_EXTENT,
+
+           RIGHT_EXTENT,  TOP_EXTENT,    REAR_EXTENT,
+           RIGHT_EXTENT,  MIDDLE_EXTENT, FRONT_EXTENT,
+           RIGHT_EXTENT,  BOTTOM_EXTENT, REAR_EXTENT,
+
+           LEFT_EXTENT,	  BOTTOM_EXTENT, REAR_EXTENT,
+           LEFT_EXTENT,	  TOP_EXTENT,    REAR_EXTENT,
+           RIGHT_EXTENT,  TOP_EXTENT,    REAR_EXTENT,
+           RIGHT_EXTENT,  BOTTOM_EXTENT, REAR_EXTENT,
+
+           //Object 2 positions
+           TOP_EXTENT,		RIGHT_EXTENT,	REAR_EXTENT,
+           MIDDLE_EXTENT,	RIGHT_EXTENT,	FRONT_EXTENT,
+           MIDDLE_EXTENT,	LEFT_EXTENT,	FRONT_EXTENT,
+           TOP_EXTENT,		LEFT_EXTENT,	REAR_EXTENT,
+
+           BOTTOM_EXTENT,	RIGHT_EXTENT,	REAR_EXTENT,
+           MIDDLE_EXTENT,	RIGHT_EXTENT,	FRONT_EXTENT,
+           MIDDLE_EXTENT,	LEFT_EXTENT,	FRONT_EXTENT,
+           BOTTOM_EXTENT,	LEFT_EXTENT,	REAR_EXTENT,
+
+           TOP_EXTENT,		RIGHT_EXTENT,	REAR_EXTENT,
+           MIDDLE_EXTENT,	RIGHT_EXTENT,	FRONT_EXTENT,
+           BOTTOM_EXTENT,	RIGHT_EXTENT,	REAR_EXTENT,
+                   
+           TOP_EXTENT,		LEFT_EXTENT,	REAR_EXTENT,
+           MIDDLE_EXTENT,	LEFT_EXTENT,	FRONT_EXTENT,
+           BOTTOM_EXTENT,	LEFT_EXTENT,	REAR_EXTENT,
+                   
+           BOTTOM_EXTENT,	RIGHT_EXTENT,	REAR_EXTENT,
+           TOP_EXTENT,		RIGHT_EXTENT,	REAR_EXTENT,
+           TOP_EXTENT,		LEFT_EXTENT,	REAR_EXTENT,
+           BOTTOM_EXTENT,	LEFT_EXTENT,	REAR_EXTENT,
+
+           // Object 1 colors
+           0.75, 0.75, 1.0, 1.0,
+           0.75, 0.75, 1.0, 1.0,
+           0.75, 0.75, 1.0, 1.0,
+           0.75, 0.75, 1.0, 1.0,
+
+           0.0, 0.5, 0.0, 1.0,
+           0.0, 0.5, 0.0, 1.0,
+           0.0, 0.5, 0.0, 1.0,
+           0.0, 0.5, 0.0, 1.0,
+
+           1.0, 0.0, 0.0, 1.0,
+           1.0, 0.0, 0.0, 1.0,
+           1.0, 0.0, 0.0, 1.0,
+
+           0.8, 0.8, 0.8, 1.0,
+           0.8, 0.8, 0.8, 1.0,
+           0.8, 0.8, 0.8, 1.0,
+
+           0.5, 0.5, 0.0, 1.0,
+           0.5, 0.5, 0.0, 1.0,
+           0.5, 0.5, 0.0, 1.0,
+           0.5, 0.5, 0.0, 1.0,
+
+           // Object 2 colors
+           1.0, 0.0, 0.0, 1.0,
+           1.0, 0.0, 0.0, 1.0,
+           1.0, 0.0, 0.0, 1.0,
+           1.0, 0.0, 0.0, 1.0,
+
+           0.5, 0.5, 0.0, 1.0,
+           0.5, 0.5, 0.0, 1.0,
+           0.5, 0.5, 0.0, 1.0,
+           0.5, 0.5, 0.0, 1.0,
+
+           0.0, 0.5, 0.0, 1.0,
+           0.0, 0.5, 0.0, 1.0,
+           0.0, 0.5, 0.0, 1.0,
+
+           0.75, 0.75, 1.0, 1.0,
+           0.75, 0.75, 1.0, 1.0,
+           0.75, 0.75, 1.0, 1.0,
+
+           0.8, 0.8, 0.8, 1.0,
+           0.8, 0.8, 0.8, 1.0,
+           0.8, 0.8, 0.8, 1.0,
+           0.8, 0.8, 0.8, 1.0,
+        ];
+
+        indexData = [
+          0, 2, 1,
+          3, 2, 0,
+
+          4, 5, 6,
+          6, 7, 4,
+
+          8, 9, 10,
+          11, 13, 12,
+
+          14, 16, 15,
+          17, 16, 14,
+        ];
+
+        vertexBufferObject = gl.createBuffer();
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBufferObject);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexData), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+        indexBufferObject = gl.createBuffer();
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferObject);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexData), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+      }
+
+      function initializeVertexArrayObjects(){
+        vaoObject1 = gl.ext.createVertexArrayOES();
+        gl.ext.bindVertexArrayOES(vaoObject1);
+
+        var colorDataOffset = 12 * numberOfVertices;
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBufferObject);
+        vertexPositionAttribute = gl.getAttribLocation(theProgram, "position");
+        vertexColorAttribute = gl.getAttribLocation(theProgram, "color");
+        gl.enableVertexAttribArray(vertexPositionAttribute);
+        gl.enableVertexAttribArray(vertexColorAttribute);
+        gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, colorDataOffset);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferObject);
+
+        gl.ext.bindVertexArrayOES(null);
+
+        vaoObject2 = gl.ext.createVertexArrayOES();
+        gl.ext.bindVertexArrayOES(vaoObject2);
+
+        var posDataOffset = 12 * (numberOfVertices/2);
+        colorDataOffset += 16 * (numberOfVertices/2);
+
+        vertexPositionAttribute = gl.getAttribLocation(theProgram, "position");
+        vertexColorAttribute = gl.getAttribLocation(theProgram, "color");
+        gl.enableVertexAttribArray(vertexPositionAttribute);
+        gl.enableVertexAttribArray(vertexColorAttribute);
+        gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, posDataOffset);
+        gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, colorDataOffset);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferObject);
+
+        gl.ext.bindVertexArrayOES(null);
+      }
+
+      function display(){
+        var vertexPositionAttribute = null;
+        var vertexColorAttribute = null;
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(theProgram);
+
+        gl.ext.bindVertexArrayOES(vaoObject1);
+        gl.uniform3f(offsetUniform, 0.0, 0.0, 0.0);
+        gl.drawElements(gl.TRIANGLES, indexData.length, gl.UNSIGNED_SHORT, 0);
+
+        gl.ext.bindVertexArrayOES(vaoObject2);
+        gl.uniform3f(offsetUniform, 0.0, 0.0, -1.0);
+        gl.drawElements(gl.TRIANGLES, indexData.length, gl.UNSIGNED_SHORT, 0);
+
+        gl.useProgram(null);
+      }
+
+    </script>
+  </head>
+
+  <script id="shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+
+    varying vec4 theColor;
+
+    void main(void) {
+      gl_FragColor = theColor;
+    }
+  </script>
+
+  <script id="shader-vs" type="x-shader/x-vertex">
+    attribute vec4 position;
+    attribute vec4 color;
+
+    varying vec4 theColor;
+
+    uniform vec3 offset;
+    uniform mat4 perspectiveMatrix;
+
+    void main(void) {
+      vec4 cameraPos = position + vec4(offset, 0.0);
+      
+      gl_Position = perspectiveMatrix*cameraPos;
+      theColor = color;
+    }
+  </script>
+	
+  <body onload="start()">
+    <canvas id="glcanvas" width=500px height=500px>
+      Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
+    </canvas>
+  </body>
+</html>

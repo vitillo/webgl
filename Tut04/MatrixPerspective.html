@@ -28,9 +28,10 @@
 
       function initializeProgram(){
         var shaderList = [];
-        var frustumScaleUnif;
-        var zNearUnif;
-        var zFarUnif;
+        var perspectiveMatrixUnif;
+        var frustumScale;
+        var zNear;
+        var zFar;
 
         shaderList.push(Framework.loadShader(gl, "shader-fs"));
         shaderList.push(Framework.loadShader(gl, "shader-vs"));
@@ -39,14 +40,19 @@
 
         offsetUniform = gl.getUniformLocation(theProgram, "offset");
 
-        frustumScaleUnif = gl.getUniformLocation(theProgram, "frustumScale");
-        zNearUnif = gl.getUniformLocation(theProgram, "zNear");
-        zFarUnif = gl.getUniformLocation(theProgram, "zFar");
+        perspectiveMatrixUnif = gl.getUniformLocation(theProgram, "perspectiveMatrix");
+
+        frustumScale = 1.0;
+        zNear = 1.0;
+        zFar = 3.0;
+
+        theMatrix = [frustumScale, 0.0, 0.0, 0.0,
+                     0.0, frustumScale, 0.0, 0.0,
+                     0.0, 0.0, (zFar + zNear)/(zNear - zFar), -1.0,
+                     0.0, 0.0, (2.0*zFar*zNear)/(zNear - zFar), 0.0];
 
         gl.useProgram(theProgram);
-        gl.uniform1f(frustumScaleUnif, 1.0);
-        gl.uniform1f(zNearUnif, 1.0);
-        gl.uniform1f(zFarUnif, 3.0);
+        gl.uniformMatrix4fv(perspectiveMatrixUnif, false, theMatrix);
         gl.useProgram(null);
       }
 
@@ -201,23 +207,14 @@
     attribute vec4 color;
 
     varying vec4 theColor;
+
     uniform vec2 offset;
-    uniform float zNear;
-    uniform float zFar;
-    uniform float frustumScale;
+    uniform mat4 perspectiveMatrix;
 
     void main(void) {
       vec4 cameraPos = position + vec4(offset.x, offset.y, 0.0, 0.0);
-      vec4 clipPos;
-
-      clipPos.xy = cameraPos.xy * frustumScale;
-
-      clipPos.z = cameraPos.z*(zNear + zFar)/(zNear - zFar);
-      clipPos.z += 2.0*zNear*zFar/(zNear - zFar);
-
-      clipPos.w = -cameraPos.z;
-
-      gl_Position = clipPos;
+      
+      gl_Position = perspectiveMatrix*cameraPos;
       theColor = color;
     }
   </script>

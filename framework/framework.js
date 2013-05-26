@@ -4,13 +4,20 @@ Framework = function(){
     canvas = document.getElementById(canvas);
     
     try {
-      gl = canvas.getContext("experimental-webgl");
+      gl = canvas.getContext("experimental-webgl", {depth: true});
     }
     catch(e) {
     }
     
     if (!gl) {
       alert("Unable to initialize WebGL. Your browser may not support it.");
+    }
+
+    ext = gl.getExtension("OES_vertex_array_object");
+    if (!ext) {
+      alert("Vertex Array Objects not supported. You need a browser that supports this extension");
+    }else{
+      gl.ext = ext;
     }
 
     return gl;
